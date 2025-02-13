@@ -61,7 +61,7 @@ uint8_t flags_register_to_u8 (flagsRegister flag){
 }
 
 
-//Shifts each bit by its corresponding Flag amount, so that it is in the left
+//Shifts each bit by its corresponding Flag amount, so that it is in the right
 //most spot. It then does a 1 bit mask so everything else is set to zero except
 // the leftmost bit. It then checks if it is a 1 or a 0.
 flagsRegister u8_to_flags_register (uint8_t value){
