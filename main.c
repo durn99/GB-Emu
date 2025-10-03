@@ -2,23 +2,21 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef struct {
-    uint8_t A;
-    uint8_t B;
-    uint8_t C;
-    uint8_t D;
-    uint8_t E;
-    uint8_t F;
-    uint8_t G;
-} registers;
-
 #define ZERO_FLAG_BYTE_POSITION  7
 #define SUBTRACT_FLAG_BYTE_POSITION  6
 #define HALF_CARRY_FLAG_BYTE_POSITION  5
 #define CARRY_FLAG_BYTE_POSITION  4
 
-
-
+typedef struct {
+    uint8_t a;
+    uint8_t b;
+    uint8_t c;
+    uint8_t d;
+    uint8_t e;
+    uint8_t f;
+    uint8_t h;
+    uint8_t l;
+} registers;
 
 typedef struct {
     bool zero;
@@ -28,22 +26,31 @@ typedef struct {
 } flagsRegister;
 
 //Accesses the register struct 
-//Turns B into 16 bit int and moves it 8 bits left
+//Typecasts B into 16 bit int and moves it 8 bits left
 //Ors that with transformed 16-bit C which has all its bits on the right
 // So 8 left and 8 right combine to 16 bit unsigned int.
-uint16_t get_BC(registers* reg){
-    return ((uint16_t)reg->B << 8) | (uint16_t)reg->C;
+uint16_t get_bc(registers* reg){
+    return ((uint16_t)reg->b << 8) | (uint16_t)reg->c;
 }
-
 
 
 //Splits BC into registers B and C
 // Typecasts the 16 bit input value and uses a bitmask
 //For B it shifts the upper 8 bits to the right
 //For C it doesn't need to do that since they are already in lower 8
-void set_BC(registers* reg, uint16_t value){
-    reg->B = (uint8_t)((value & 0xFF00) >> 8);
-    reg->C = (uint8_t)(value & 0XFF);
+void set_bc(registers* reg, uint16_t value){
+    reg->b = (uint8_t)((value & 0xFF00) >> 8);
+    reg->c = (uint8_t)(value & 0XFF);
+}
+
+uint16_t get_de(registers* reg){
+    return ((uint16_t)reg->d << 8) | (uint16_t)reg->e;
+}
+
+
+void set_de(registers* reg, uint16_t value){
+    reg->d = (uint8_t)((value & 0xFF00) >> 8);
+    reg->e = (uint8_t)(value & 0XFF);
 }
 
 // Checks each flag in the flags register. If they are true
@@ -61,20 +68,7 @@ uint8_t flags_register_to_u8 (flagsRegister flag){
 }
 
 
-//Shifts each bit by its corresponding Flag amount, so that it is in the right
-//most spot. It then does a 1 bit mask so everything else is set to zero except
-// the righttmost bit. It then checks if it is a 1 or a 0.
-flagsRegister u8_to_flags_register (uint8_t value){
-    flagsRegister flag;
 
-    flag.zero = ((value) >> ZERO_FLAG_BYTE_POSITION & 0b1) != 0;
-    flag.subtract = ((value) >> SUBTRACT_FLAG_BYTE_POSITION & 0b1) != 0;
-    flag.subtract = ((value) >> SUBTRACT_FLAG_BYTE_POSITION & 0b1) != 0;
-    flag.half_carry = ((value) >> HALF_CARRY_FLAG_BYTE_POSITION & 0b1) != 0;
-    flag.carry = ((value) >> CARRY_FLAG_BYTE_POSITION & 0b1) != 0;
-
-    return flag;
-}
 
 int main(){
 
