@@ -36,9 +36,23 @@ typedef enum {
     L
 } ArithmeticTarget;
 
+
 typedef enum {
     ADD
+} InstructionType;
+
+// Instruction type is just ADD,SUB, MUL, etc
+// the union chooses 1 register do the instruction to
+typedef struct {
+    InstructionType type;
+    union {
+	    ArithmeticTarget target;
+	};
 } Instruction;
+
+typedef struct {
+    registers Registers;
+} CPU;
 
 
 
@@ -128,26 +142,46 @@ void set_af(registers* reg, uint16_t value){
     u8_to_flag_register(&reg->f, value & 0x00FF);
 }
 
+uint8_t add(CPU *cpu, uint8_t value){
+    uint16_t result = cpu->registers.a + value;             //Since we are adding 2 8 bit numbers they could overflow
+                                                            //so use store in 16 bit result for safe keeping (:
+    //set flags flag register
+    return (uint8_t)result;                                 //typecast the 16 bits down to 8 bits
+}
+
+
+void execute(CPU *cpu, Instruction inst){
+    switch (inst.type) {                                    //What is our instruction?
+        case ADD:
+            switch (inst.target) {                          //What is our register?
+                //case B:
+                    //break;
+                case C: 
+                    uint8_t value = cpu->registers.c;       //value to pulled from C to add to A
+                    uint8_t new_value = add(cpu, value);    //Add the value to register A
+                    cpu->registers.a = new_value;           //Set A to new value
+                    break;
+                default:
+            }
+        //Other Instructions ...
+        default:
+    }
+}
 
 
 
 
 int main(){
-    registers reg;
-    uint16_t value = 0B1111111110100000;
-    set_af(&reg, value);
+    //registers reg;
+    Instruction check;
+
+    check.type = ADD;
+    check.target = B;
+
+    if ((check.type == ADD)){
+        printf("Instruction Add Selected for target %d\n", check.target);
+    }
     
-    uint16_t ret = get_af(&reg);
-    printf("test value %b\n", value);
-    printf("af value: %b\n", ret);
-    printf("register a: %b\n\n", reg.a);
-
-    printf("flag registers\n");
-    printf("zero flag: %d\n",reg.f.zero);
-    printf("subtract flag: %d\n",reg.f.subtract);
-    printf("half-carry flag: %d\n",reg.f.half_carry);
-    printf("zero carry: %d\n",reg.f.carry);
-
-
-return 0;
+    
+    return 0;
 }
