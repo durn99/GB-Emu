@@ -26,6 +26,20 @@ typedef struct {
     uint8_t l;
 } registers;
 
+typedef enum {
+    A,
+    B,
+    C,
+    D,
+    E,
+    H,
+    L
+} ArithmeticTarget;
+
+typedef enum {
+    ADD
+} Instruction;
+
 
 
 // Checks each flag in the flags register. If they are true
