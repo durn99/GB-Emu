@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -33,7 +32,8 @@ typedef enum {
     D,
     E,
     H,
-    L
+    L,
+    HL
 } ArithmeticTarget;
 
 
@@ -143,24 +143,85 @@ void set_af(registers* reg, uint16_t value){
 }
 
 uint8_t add(CPU *cpu, uint8_t value){
-    uint16_t result = cpu->registers.a + value;             //Since we are adding 2 8 bit numbers they could overflow
+    uint16_t result = cpu->Registers.a + value;             //Since we are adding 2 8 bit numbers they could overflow
                                                             //so use store in 16 bit result for safe keeping (:
-    //set flags flag register
-    return (uint8_t)result;                                 //typecast the 16 bits down to 8 bits
+
+    //Carry
+    if (result > 0xFF){
+        cpu->Registers.f.carry = true;
+    }
+    else {cpu->Registers.f.carry = false;}
+
+    //Half-Carry
+    if ((cpu->Registers.a & 0xF)+(value & 0xF) > 0xF){
+        cpu->Registers.f.half_carry = true;
+    }
+    else {cpu->Registers.f.half_carry = false;}
+
+
+    //Subtract
+    cpu->Registers.f.subtract = false;
+
+    //Zero
+    if (result == 0){
+        cpu->Registers.f.zero = true;
+    }
+    else {cpu->Registers.f.zero = false;}
+
+    return (uint8_t)result;                                //typecast the 16 bits down to 8 bits, modulos out the overflow
 }
 
 
 void execute(CPU *cpu, Instruction inst){
+    uint8_t value;
+    uint16_t address;
+    uint8_t new_value;
     switch (inst.type) {                                    //What is our instruction?
         case ADD:
-            switch (inst.target) {                          //What is our register?
-                //case B:
-                    //break;
-                case C: 
-                    uint8_t value = cpu->registers.c;       //value to pulled from C to add to A
-                    uint8_t new_value = add(cpu, value);    //Add the value to register A
-                    cpu->registers.a = new_value;           //Set A to new value
+            switch (inst.target) {                          //What is our register to add from?
+                case A:
+                    value = cpu->Registers.a;
+                     new_value = add(cpu, value);
+                    cpu->Registers.a = new_value;
                     break;
+                case B:
+                    value = cpu->Registers.b;               //value to pulled from B to add to A
+                     new_value = add(cpu, value);           //Add the value to register A
+                    cpu->Registers.a = new_value;           //Set A to new value
+                    break;
+                case C:
+                    value = cpu->Registers.c;
+                     new_value = add(cpu, value);
+                    cpu->Registers.a = new_value;
+                    break;
+                case D:
+                    value = cpu->Registers.d;
+                    new_value = add(cpu, value);
+                    cpu->Registers.a = new_value;
+                    break;
+                case E:
+                    value = cpu->Registers.e;
+                     new_value = add(cpu, value);
+                    cpu->Registers.a = new_value;
+                    break;
+                case H:
+                    value = cpu->Registers.h;
+                     new_value = add(cpu, value);
+                    cpu->Registers.a = new_value;
+                    break;
+                case L:
+                    value = cpu->Registers.l;
+                     new_value = add(cpu, value);
+                    cpu->Registers.a = new_value;
+                    break;
+                case HL:
+                    uint8_t memory[0xffff];                     // 64 KB memory
+                    memory[0xaaaa] = 69;                        // set test value in memory
+                    address = get_hl(&cpu->Registers);          //get 16 bit address by combing h and l
+                    value = memory[address];                    //use that value as your address in memory
+                    new_value = add(cpu, value);                //now just add to a
+                    cpu->Registers.a = new_value;
+                //TODO: need to add add d8 instruction
                 default:
             }
         //Other Instructions ...
@@ -172,16 +233,17 @@ void execute(CPU *cpu, Instruction inst){
 
 
 int main(){
-    //registers reg;
     Instruction check;
-
+    CPU cpu;
+    
+    cpu.Registers.a = 0;
+    cpu.Registers.h = 0XAA;
+    cpu.Registers.l = 0XAA;
     check.type = ADD;
-    check.target = B;
+    check.target = HL;
+    execute(&cpu, check);
 
-    if ((check.type == ADD)){
-        printf("Instruction Add Selected for target %d\n", check.target);
-    }
-    
-    
+    printf("value in a: %d\n", cpu.Registers.a);
+
     return 0;
 }
